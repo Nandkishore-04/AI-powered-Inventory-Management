@@ -19,7 +19,7 @@ export async function getInventoryAnalytics(days: number = 30) {
     // Parallel data fetching for performance
     const [
       totalProducts,
-      totalValue,
+      _totalValue,
       lowStockCount,
       outOfStockCount,
       recentTransactions,

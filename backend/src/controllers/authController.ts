@@ -98,7 +98,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { passwordHash: _passwordHash, ...userWithoutPassword } = user;
 
     successResponse(res, { user: userWithoutPassword, token }, 'Login successful');
   } catch (error: any) {

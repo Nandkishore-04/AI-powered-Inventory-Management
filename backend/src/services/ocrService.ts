@@ -1,9 +1,7 @@
 // import OpenAI from 'openai';
 import { extractInvoiceDataWithGoogleDocAI } from './googleDocumentAIService';
-import fs from 'fs';
-import path from 'path';
 import logger from '../config/logger';
-import { validateGSTINFormat, processInvoiceGST } from '../utils/gstValidation';
+import { validateGSTINFormat } from '../utils/gstValidation';
 import prisma from '../config/database';
 
 // const openai = new OpenAI({
@@ -71,9 +69,6 @@ export async function extractInvoiceDataWithAI(
     logger.info('Processing invoice with Google Document AI', { filePath });
     // result is an object with keys from entity.type (lowercase)
     // fallback: try to extract known fields
-    const getField = (obj: any, key: string) => {
-      return obj[key] || obj[key.toLowerCase()] || obj[key.toUpperCase()] || '';
-    };
     const result = await extractInvoiceDataWithGoogleDocAI(filePath);
     // Fallback for items extraction
     let items: any[] = [];
@@ -111,7 +106,7 @@ export async function extractInvoiceDataWithAI(
  * (Useful when OpenAI is not available)
  */
 export async function extractInvoiceDataSimple(
-  imagePath: string
+  _imagePath: string
 ): Promise<Partial<ExtractedInvoiceData>> {
   // This is a simplified version that would work with pre-processed text
   // In a real scenario, you'd use Tesseract.js or similar for OCR
@@ -174,7 +169,7 @@ export function validateInvoiceData(data: ExtractedInvoiceData): ValidationResul
     fieldConfidence.invoiceNumber = 0;
   } else {
     // Check if invoice number looks valid (alphanumeric, reasonable length)
-    const invoiceNumberRegex = /^[A-Z0-9\-\/]{3,30}$/i;
+    const invoiceNumberRegex = /^[A-Z0-9-/]{3,30}$/i;
     if (invoiceNumberRegex.test(data.invoiceNumber)) {
       fieldConfidence.invoiceNumber = 95;
     } else {
@@ -421,20 +416,7 @@ export async function generateCorrectionSuggestions(
   return suggestions;
 }
 
-/**
- * Get mime type from file extension
- */
-function getMimeType(filePath: string): string {
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeTypes: { [key: string]: string } = {
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.webp': 'image/webp',
-    '.pdf': 'application/pdf',
-  };
-  return mimeTypes[ext] || 'image/jpeg';
-}
+
 
 /**
  * Main function to process invoice

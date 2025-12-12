@@ -3,10 +3,8 @@ import prisma from '../config/database';
 import { successResponse, errorResponse } from '../utils/response';
 import logger from '../config/logger';
 import { processInvoice, validateInvoiceData, checkDuplicateInvoice, generateCorrectionSuggestions } from '../services/ocrService';
-import { processInvoiceGST } from '../utils/gstValidation';
 import { deleteFile } from '../config/upload';
 import { templateService, applyTemplateValidation } from '../services/invoiceTemplateService';
-import { invoiceQueue } from '../services/invoiceQueue';
 
 // Upload and process invoice
 export const uploadInvoice = async (
@@ -46,7 +44,7 @@ export const uploadInvoice = async (
     const corrections = await generateCorrectionSuggestions(extractedData, validation);
 
     // Find or create supplier for template validation
-    let supplier = await prisma.supplier.findFirst({
+    const supplier = await prisma.supplier.findFirst({
       where: {
         OR: [
           { name: { contains: extractedData.supplierName } },
@@ -78,8 +76,8 @@ export const uploadInvoice = async (
       message: validation.canAutoApprove
         ? 'Invoice processed successfully - qualifies for auto-approval'
         : validation.valid
-        ? 'Invoice processed successfully - manual review recommended'
-        : 'Invoice processed with errors - review required',
+          ? 'Invoice processed successfully - manual review recommended'
+          : 'Invoice processed with errors - review required',
     });
   } catch (error: any) {
     logger.error('Error processing invoice:', error);

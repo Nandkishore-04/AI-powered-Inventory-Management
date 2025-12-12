@@ -48,6 +48,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup Database for CI
+        working-directory: ./backend
+        run: |
+          # Switch provider from sqlite to postgresql
+          sed -i 's/provider = "sqlite"/provider = "postgresql"/g' prisma/schema.prisma
+          # Generate Prisma Client
+          npx prisma generate
+
       - name: Lint
         working-directory: ./backend
         run: npm run lint
