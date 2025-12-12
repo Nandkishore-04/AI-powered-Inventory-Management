@@ -1,12 +1,12 @@
-// Simplified Prisma Schema for SQLite (No external DB installation needed!)
+// Prisma Schema with support for both SQLite (dev) and PostgreSQL (CI/production)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = env("DATABASE_PROVIDER") // "sqlite" or "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Core Models
