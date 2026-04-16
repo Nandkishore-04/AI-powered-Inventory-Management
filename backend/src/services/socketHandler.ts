@@ -11,6 +11,7 @@ interface SocketUser {
 
 // Store active users and their sessions
 const activeUsers = new Map<string, SocketUser>();
+const AI_MODE = (process.env.AI_MODE || 'offline').toLowerCase();
 
 export const setupSocketHandlers = (io: Server) => {
   io.on('connection', (socket: Socket) => {
@@ -68,7 +69,7 @@ export const setupSocketHandlers = (io: Server) => {
     });
 
     // Send message
-    socket.on('send_message', async (data: { content: string }) => {
+    socket.on('send_message', async (data: { content: string; language?: 'en' | 'ta' }) => {
       try {
         const userInfo = activeUsers.get(socket.id);
         if (!userInfo) {
@@ -77,7 +78,7 @@ export const setupSocketHandlers = (io: Server) => {
         }
 
         const { userId, sessionId } = userInfo;
-        const { content } = data;
+        const { content, language } = data;
 
         // Save user message
         const userMessage = await prisma.chatMessage.create({
@@ -115,8 +116,11 @@ export const setupSocketHandlers = (io: Server) => {
         let aiResponse: string;
         let metadata: any = {};
 
-        // Try OpenAI first, fallback to regex parser
-        if (isOpenAIConfigured) {
+        // Offline mode is used for demos without paid APIs.
+        const shouldUseOpenAI = AI_MODE !== 'offline' && isOpenAIConfigured;
+
+        // Try OpenAI first (if enabled), fallback to parser
+        if (shouldUseOpenAI) {
           try {
             const aiResult = await getAIResponse(content, historyForAI, userId);
             aiResponse = aiResult.response;
@@ -126,22 +130,25 @@ export const setupSocketHandlers = (io: Server) => {
             };
           } catch (error) {
             logger.error('OpenAI error, falling back to regex parser:', error);
-            const commandResult = await parseCommand(content, userId);
+            const commandResult = await parseCommand(content, userId, language);
             aiResponse = commandResult.response;
             metadata = {
               aiPowered: false,
               command: commandResult.command,
               data: commandResult.data,
+              inventoryUpdates: commandResult.inventoryUpdates,
             };
           }
         } else {
-          // Use regex parser as fallback
-          const commandResult = await parseCommand(content, userId);
+          // Use parser as primary assistant in offline/demo mode.
+          const commandResult = await parseCommand(content, userId, language);
           aiResponse = commandResult.response;
           metadata = {
             aiPowered: false,
+            mode: 'offline',
             command: commandResult.command,
             data: commandResult.data,
+            inventoryUpdates: commandResult.inventoryUpdates,
           };
         }
 

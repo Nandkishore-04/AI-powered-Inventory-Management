@@ -1,25 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, Edit, Trash2, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Search, AlertTriangle, TrendingUp } from 'lucide-react';
 import api from '../services/api';
 import { Product } from '../types';
 import toast from 'react-hot-toast';
 import ForecastModal from '../components/analytics/ForecastModal';
-import AddProductModal from '../components/AddProductModal';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Products() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
   const [forecastModal, setForecastModal] = useState<{ productId: string; productName: string } | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
 
   useEffect(() => {
     loadProducts();
     loadCategories();
-    loadSuppliers();
   }, []);
 
   const loadProducts = async () => {
@@ -28,7 +26,7 @@ export default function Products() {
       const response = await api.getProducts({ search, category: selectedCategory });
       setProducts(response.data.products || []);
     } catch (error) {
-      toast.error('Failed to load products');
+      toast.error(t('Failed to load products'));
     } finally {
       setLoading(false);
     }
@@ -43,42 +41,8 @@ export default function Products() {
     }
   };
 
-  const loadSuppliers = async () => {
-    try {
-      const response = await api.getSuppliers();
-      setSuppliers(response.data || []);
-    } catch (error) {
-      console.error('Failed to load suppliers:', error);
-    }
-  };
-
-  const handleAddProduct = async (formData: any) => {
-    try {
-      await api.createProduct(formData);
-      toast.success('Product added successfully');
-      setShowAddModal(false);
-      loadProducts();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to add product');
-    }
-  };
-
   const handleSearch = () => {
     loadProducts();
-  };
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
-      return;
-    }
-
-    try {
-      await api.deleteProduct(id);
-      toast.success('Product deleted successfully');
-      loadProducts();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete product');
-    }
   };
 
   if (loading) {
@@ -94,16 +58,16 @@ export default function Products() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Products
+            {t('Products')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your inventory products
+            {t('Products are auto-created from processed invoices')}
           </p>
         </div>
-        <button className="btn btn-primary flex items-center gap-2" onClick={() => setShowAddModal(true)}>
-          <Plus size={20} />
-          Add Product
-        </button>
+      </div>
+
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-200">
+        {t('Manual product changes are disabled. Upload and process invoices to add or update products.')}
       </div>
 
       {/* Filters */}
@@ -114,7 +78,7 @@ export default function Products() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t('Search products...')}
                 className="input pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -130,7 +94,7 @@ export default function Products() {
               setTimeout(loadProducts, 100);
             }}
           >
-            <option value="">All Categories</option>
+            <option value="">{t('All Categories')}</option>
             {categories.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
@@ -138,7 +102,7 @@ export default function Products() {
             ))}
           </select>
           <button className="btn btn-primary" onClick={handleSearch}>
-            Search
+            {t('Search')}
           </button>
         </div>
       </div>
@@ -149,21 +113,21 @@ export default function Products() {
           <table className="table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Reorder Level</th>
-                <th>Unit Price</th>
-                <th>GST Rate</th>
-                <th>Supplier</th>
-                <th>Actions</th>
+                <th>{t('Name')}</th>
+                <th>{t('Category')}</th>
+                <th>{t('Stock')}</th>
+                <th>{t('Reorder Level')}</th>
+                <th>{t('Unit Price')}</th>
+                <th>{t('GST Rate')}</th>
+                <th>{t('Supplier')}</th>
+                <th>{t('Insights')}</th>
               </tr>
             </thead>
             <tbody>
               {products.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-8 text-gray-500">
-                    No products found
+                    {t('No products found yet. Upload an invoice to populate products.')}
                   </td>
                 </tr>
               ) : (
@@ -197,7 +161,7 @@ export default function Products() {
                       <div className="flex items-center gap-2">
                         <button
                           className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded text-indigo-600"
-                          title="View Forecast"
+                          title={t('View Forecast')}
                           onClick={() =>
                             setForecastModal({
                               productId: product.id,
@@ -206,19 +170,6 @@ export default function Products() {
                           }
                         >
                           <TrendingUp size={16} />
-                        </button>
-                        <button
-                          className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded text-blue-600"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-600"
-                          title="Delete"
-                          onClick={() => handleDelete(product.id, product.name)}
-                        >
-                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -236,15 +187,6 @@ export default function Products() {
           productId={forecastModal.productId}
           productName={forecastModal.productName}
           onClose={() => setForecastModal(null)}
-        />
-      )}
-
-      {/* Add Product Modal */}
-      {showAddModal && (
-        <AddProductModal
-          suppliers={suppliers}
-          onClose={() => setShowAddModal(false)}
-          onSubmit={handleAddProduct}
         />
       )}
     </div>

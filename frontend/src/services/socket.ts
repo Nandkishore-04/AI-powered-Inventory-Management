@@ -83,8 +83,8 @@ class SocketService {
     this.emit('join_session', { userId, sessionId });
   }
 
-  sendMessage(content: string) {
-    this.emit('send_message', { content });
+  sendMessage(content: string, language?: 'en' | 'ta') {
+    this.emit('send_message', { content, language });
   }
 
   setTyping(isTyping: boolean) {

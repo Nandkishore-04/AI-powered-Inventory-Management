@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { successResponse, errorResponse } from '../utils/response';
-import { CreateProductInput, UpdateProductInput, UpdateStockInput } from '../utils/validation';
 
 export const getAllProducts = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -89,21 +88,7 @@ export const getProductById = async (req: AuthRequest, res: Response): Promise<v
 
 export const createProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const data: CreateProductInput = req.body;
-
-    const product = await prisma.product.create({
-      data,
-      include: {
-        supplier: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    successResponse(res, product, 'Product created successfully', 201);
+    errorResponse(res, 'Manual product creation is disabled. Upload an invoice to add products.', 403);
   } catch (error: any) {
     errorResponse(res, error.message, 500);
   }
@@ -111,23 +96,7 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const data: UpdateProductInput = req.body;
-
-    const product = await prisma.product.update({
-      where: { id },
-      data,
-      include: {
-        supplier: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    successResponse(res, product, 'Product updated successfully');
+    errorResponse(res, 'Manual product updates are disabled. Edit invoice line items instead.', 403);
   } catch (error: any) {
     errorResponse(res, error.message, 500);
   }
@@ -135,13 +104,7 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
 
 export const deleteProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-
-    await prisma.product.delete({
-      where: { id },
-    });
-
-    successResponse(res, null, 'Product deleted successfully');
+    errorResponse(res, 'Manual product deletion is disabled. Remove the source invoice if needed.', 403);
   } catch (error: any) {
     errorResponse(res, error.message, 500);
   }
@@ -178,41 +141,7 @@ export const getLowStockProducts = async (req: AuthRequest, res: Response): Prom
 
 export const updateStock = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { productId, quantity, notes }: UpdateStockInput = req.body;
-
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-    });
-
-    if (!product) {
-      errorResponse(res, 'Product not found', 404);
-      return;
-    }
-
-    const newStock = product.currentStock + quantity;
-
-    if (newStock < 0) {
-      errorResponse(res, 'Insufficient stock', 400);
-      return;
-    }
-
-    const [updatedProduct] = await prisma.$transaction([
-      prisma.product.update({
-        where: { id: productId },
-        data: { currentStock: newStock },
-      }),
-      prisma.inventoryTransaction.create({
-        data: {
-          productId,
-          transactionType: quantity > 0 ? 'PURCHASE' : 'SALE',
-          quantity: Math.abs(quantity),
-          referenceType: 'MANUAL',
-          notes,
-        },
-      }),
-    ]);
-
-    successResponse(res, updatedProduct, 'Stock updated successfully');
+    errorResponse(res, 'Manual stock updates are disabled. Stock is managed from invoice workflow.', 403);
   } catch (error: any) {
     errorResponse(res, error.message, 500);
   }

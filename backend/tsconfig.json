@@ -17,11 +17,10 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "database/**/*", "prisma/**/*"],
+  "exclude": ["node_modules", "dist", "database/**/*", "prisma/**/*", "src/tests/**/*"],
   "ts-node": {
     "files": true
   }

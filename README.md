@@ -198,19 +198,19 @@ The application will be available at:
 - Backend API: http://localhost:5000
 - API Health Check: http://localhost:5000/health
 
-## Default Credentials
+## Seed Credentials
 
-After seeding, you can login with:
+User credentials are now read from environment variables during seeding.
 
-**Admin Account:**
-- Email: `admin@inventory.com`
-- Password: `admin123`
-- Role: ADMIN (full access)
+Set these values before running `npx prisma db seed`:
+- `SEED_ADMIN_EMAIL`
+- `SEED_ADMIN_PASSWORD`
+- `SEED_MANAGER_EMAIL`
+- `SEED_MANAGER_PASSWORD`
 
-**Manager Account:**
-- Email: `manager@inventory.com`
-- Password: `manager123`
-- Role: MANAGER (limited access)
+Optional:
+- `SEED_ADMIN_NAME`
+- `SEED_MANAGER_NAME`
 
 ## Project Structure
 

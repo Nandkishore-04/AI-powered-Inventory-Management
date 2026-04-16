@@ -12,6 +12,7 @@ import Suppliers from './pages/Suppliers';
 import Chat from './pages/Chat';
 import Analytics from './pages/Analytics';
 import Invoices from './pages/Invoices';
+import { useLanguage } from './contexts/LanguageContext';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -19,6 +20,7 @@ import Layout from './components/Layout';
 
 function App() {
   const { loadUser } = useAuthStore();
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadUser();
@@ -128,7 +130,7 @@ function App() {
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-gray-900">404</h1>
-                <p className="text-gray-600 mt-2">Page not found</p>
+                <p className="text-gray-600 mt-2">{t('Page not found')}</p>
               </div>
             </div>
           }

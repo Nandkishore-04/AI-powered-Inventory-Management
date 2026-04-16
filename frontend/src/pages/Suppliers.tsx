@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus, Edit, Trash2, Mail, Phone } from 'lucide-react';
+import { Search, Mail, Phone } from 'lucide-react';
 import api from '../services/api';
 import { Supplier } from '../types';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Suppliers() {
+  const { t } = useLanguage();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -19,23 +21,9 @@ export default function Suppliers() {
       const response = await api.getSuppliers({ search });
       setSuppliers(response.data || []);
     } catch (error) {
-      toast.error('Failed to load suppliers');
+      toast.error(t('Failed to load suppliers'));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
-      return;
-    }
-
-    try {
-      await api.deleteSupplier(id);
-      toast.success('Supplier deleted successfully');
-      loadSuppliers();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete supplier');
     }
   };
 
@@ -52,16 +40,16 @@ export default function Suppliers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Suppliers
+            {t('Suppliers')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your suppliers
+            {t('Suppliers are auto-created from processed invoices')}
           </p>
         </div>
-        <button className="btn btn-primary flex items-center gap-2">
-          <Plus size={20} />
-          Add Supplier
-        </button>
+      </div>
+
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-200">
+        {t('Manual supplier changes are disabled. Upload and process invoices to add or update suppliers.')}
       </div>
 
       {/* Search */}
@@ -71,7 +59,7 @@ export default function Suppliers() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search suppliers..."
+              placeholder={t('Search suppliers...')}
               className="input pl-10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -79,7 +67,7 @@ export default function Suppliers() {
             />
           </div>
           <button className="btn btn-primary" onClick={loadSuppliers}>
-            Search
+            {t('Search')}
           </button>
         </div>
       </div>
@@ -88,7 +76,7 @@ export default function Suppliers() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {suppliers.length === 0 ? (
           <div className="col-span-full text-center py-12 text-gray-500">
-            No suppliers found
+            {t('No suppliers found yet. Upload an invoice to populate suppliers.')}
           </div>
         ) : (
           suppliers.map((supplier) => (
@@ -111,7 +99,7 @@ export default function Suppliers() {
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400'
                   }`}
                 >
-                  {supplier.activeStatus ? 'Active' : 'Inactive'}
+                  {supplier.activeStatus ? t('Active') : t('Inactive')}
                 </span>
               </div>
 
@@ -141,22 +129,8 @@ export default function Suppliers() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 pt-4 border-t dark:border-gray-700">
-                <button
-                  className="flex-1 btn btn-secondary text-sm py-2 flex items-center justify-center gap-2"
-                  title="Edit"
-                >
-                  <Edit size={14} />
-                  Edit
-                </button>
-                <button
-                  className="flex-1 btn btn-danger text-sm py-2 flex items-center justify-center gap-2"
-                  title="Delete"
-                  onClick={() => handleDelete(supplier.id, supplier.name)}
-                >
-                  <Trash2 size={14} />
-                  Delete
-                </button>
+              <div className="pt-4 border-t dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+                {t('Source: invoice ingestion workflow')}
               </div>
             </div>
           ))

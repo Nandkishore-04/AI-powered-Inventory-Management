@@ -1,9 +1,12 @@
+import { useLanguage } from '../../contexts/LanguageContext';
+
 interface HealthScoreGaugeProps {
   score: number;
   size?: 'sm' | 'md' | 'lg';
 }
 
 export default function HealthScoreGauge({ score, size = 'md' }: HealthScoreGaugeProps) {
+  const { t } = useLanguage();
   const sizeClasses = {
     sm: 'w-24 h-24',
     md: 'w-32 h-32',
@@ -48,7 +51,7 @@ export default function HealthScoreGauge({ score, size = 'md' }: HealthScoreGaug
       </svg>
       <div className="absolute inset-0 flex items-center justify-center flex-col">
         <span className={`text-2xl font-bold ${text}`}>{score}</span>
-        <span className="text-xs text-gray-500">Health</span>
+        <span className="text-xs text-gray-500">{t('Health Score')}</span>
       </div>
     </div>
   );

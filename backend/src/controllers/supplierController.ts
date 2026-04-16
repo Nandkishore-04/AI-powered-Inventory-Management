@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { successResponse, errorResponse } from '../utils/response';
-import { CreateSupplierInput, UpdateSupplierInput } from '../utils/validation';
 
 export const getAllSuppliers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -84,13 +83,7 @@ export const getSupplierById = async (req: AuthRequest, res: Response): Promise<
 
 export const createSupplier = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const data: CreateSupplierInput = req.body;
-
-    const supplier = await prisma.supplier.create({
-      data,
-    });
-
-    successResponse(res, supplier, 'Supplier created successfully', 201);
+    errorResponse(res, 'Manual supplier creation is disabled. Upload an invoice to add suppliers.', 403);
   } catch (error: any) {
     errorResponse(res, error.message, 500);
   }
@@ -98,15 +91,7 @@ export const createSupplier = async (req: AuthRequest, res: Response): Promise<v
 
 export const updateSupplier = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const data: UpdateSupplierInput = req.body;
-
-    const supplier = await prisma.supplier.update({
-      where: { id },
-      data,
-    });
-
-    successResponse(res, supplier, 'Supplier updated successfully');
+    errorResponse(res, 'Manual supplier updates are disabled. Edit invoice details instead.', 403);
   } catch (error: any) {
     errorResponse(res, error.message, 500);
   }
@@ -114,23 +99,7 @@ export const updateSupplier = async (req: AuthRequest, res: Response): Promise<v
 
 export const deleteSupplier = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-
-    // Check if supplier has products
-    const productCount = await prisma.product.count({
-      where: { supplierId: id },
-    });
-
-    if (productCount > 0) {
-      errorResponse(res, 'Cannot delete supplier with associated products', 400);
-      return;
-    }
-
-    await prisma.supplier.delete({
-      where: { id },
-    });
-
-    successResponse(res, null, 'Supplier deleted successfully');
+    errorResponse(res, 'Manual supplier deletion is disabled. Remove the source invoice if needed.', 403);
   } catch (error: any) {
     errorResponse(res, error.message, 500);
   }

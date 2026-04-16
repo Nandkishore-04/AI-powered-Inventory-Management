@@ -1,3 +1,5 @@
+import { useLanguage } from '../../contexts/LanguageContext';
+
 interface TrendChartProps {
   data: Array<{
     month: string;
@@ -9,10 +11,11 @@ interface TrendChartProps {
 }
 
 export default function TrendChart({ data }: TrendChartProps) {
+  const { t } = useLanguage();
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        No trend data available
+        {t('No trend data available')}
       </div>
     );
   }
@@ -34,15 +37,15 @@ export default function TrendChart({ data }: TrendChartProps) {
       <div className="flex items-center justify-end space-x-4 text-sm">
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 bg-green-500 rounded"></div>
-          <span className="text-gray-600">Purchases</span>
+          <span className="text-gray-600">{t('Purchases')}</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 bg-red-500 rounded"></div>
-          <span className="text-gray-600">Sales</span>
+          <span className="text-gray-600">{t('Sales')}</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 bg-blue-500 rounded"></div>
-          <span className="text-gray-600">Adjustments</span>
+          <span className="text-gray-600">{t('Adjustments')}</span>
         </div>
       </div>
 

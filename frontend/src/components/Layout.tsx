@@ -15,6 +15,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -22,6 +23,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuthStore();
+  const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,7 +31,7 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleLogout = async () => {
     await logout();
-    toast.success('Logged out successfully');
+    toast.success(t('Logged out successfully'));
     navigate('/login');
   };
 
@@ -39,12 +41,12 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const menuItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/products', icon: Package, label: 'Products' },
-    { path: '/suppliers', icon: Users, label: 'Suppliers' },
-    { path: '/invoices', icon: FileText, label: 'Invoices' },
-    { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { path: '/chat', icon: MessageSquare, label: 'AI Assistant' },
+    { path: '/dashboard', icon: LayoutDashboard, label: t('Dashboard') },
+    { path: '/products', icon: Package, label: t('Products') },
+    { path: '/suppliers', icon: Users, label: t('Suppliers') },
+    { path: '/invoices', icon: FileText, label: t('Invoices') },
+    { path: '/analytics', icon: BarChart3, label: t('Analytics') },
+    { path: '/chat', icon: MessageSquare, label: t('AI Assistant') },
   ];
 
   return (
@@ -60,11 +62,18 @@ export default function Layout({ children }: LayoutProps) {
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              Inventory Manager
+              {t('Inventory Manager')}
             </h1>
           </div>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={toggleLanguage}
+              className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600"
+              title={t('Language')}
+            >
+              {language === 'en' ? t('Tamil') : t('English')}
+            </button>
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -83,7 +92,7 @@ export default function Layout({ children }: LayoutProps) {
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
-                title="Logout"
+                title={t('Logout')}
               >
                 <LogOut size={20} />
               </button>

@@ -4,7 +4,7 @@ import path from 'path';
 import logger from '../config/logger';
 
 const projectId = process.env.GOOGLE_PROJECT_ID;
-const location = process.env.GOOGLE_PROCESSOR_LOCATION || 'us';
+const location = process.env.GOOGLE_PROCESSOR_LOCATION || process.env.GOOGLE_LOCATION || 'us';
 const processorId = process.env.GOOGLE_PROCESSOR_ID;
 const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 

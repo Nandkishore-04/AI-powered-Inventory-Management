@@ -52,8 +52,10 @@ export interface PurchaseBill {
   totalAmount: number;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   filePath?: string;
+  uploadedBy?: string;
   lineItems: BillLineItem[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface BillLineItem {

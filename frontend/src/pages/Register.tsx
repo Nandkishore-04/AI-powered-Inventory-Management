@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -9,52 +10,60 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { register, isLoading } = useAuthStore();
+  const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!name || !email || !password || !confirmPassword) {
-      toast.error('Please fill in all fields');
+      toast.error(t('Please fill in all fields'));
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(t('Passwords do not match'));
       return;
     }
 
     if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error(t('Password must be at least 6 characters'));
       return;
     }
 
     try {
       await register(email, password, name);
-      toast.success('Registration successful!');
+      toast.success(t('Registration successful!'));
       navigate('/dashboard');
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
+      toast.error(t('Registration failed. Please try again.'));
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 relative">
+      <button
+        type="button"
+        onClick={toggleLanguage}
+        className="absolute top-6 right-6 px-3 py-2 bg-white/90 dark:bg-gray-800 text-sm rounded-lg shadow"
+      >
+        {language === 'en' ? t('Tamil') : t('English')}
+      </button>
       <div className="w-full max-w-md">
         <div className="card p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Create Account
+              {t('Create Account')}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Sign up for a new account
+              {t('Sign up for a new account')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name
+                {t('Full Name')}
               </label>
               <input
                 id="name"
@@ -69,7 +78,7 @@ export default function Register() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
+                {t('Email Address')}
               </label>
               <input
                 id="email"
@@ -84,7 +93,7 @@ export default function Register() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
+                {t('Password')}
               </label>
               <input
                 id="password"
@@ -99,7 +108,7 @@ export default function Register() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Confirm Password
+                {t('Confirm Password')}
               </label>
               <input
                 id="confirmPassword"
@@ -117,14 +126,14 @@ export default function Register() {
               className="btn btn-primary w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating account...' : 'Sign Up'}
+              {isLoading ? t('Creating account...') : t('Sign Up')}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Already have an account?{' '}
+            {t('Already have an account?')}{' '}
             <Link to="/login" className="text-primary-600 hover:text-primary-500 font-medium">
-              Sign in here
+              {t('Sign in here')}
             </Link>
           </p>
         </div>

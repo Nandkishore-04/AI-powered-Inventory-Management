@@ -40,6 +40,10 @@
 4. **Setup database**
    \`\`\`bash
    cd backend
+   export SEED_ADMIN_EMAIL="your-admin-email"
+   export SEED_ADMIN_PASSWORD="your-admin-password"
+   export SEED_MANAGER_EMAIL="your-manager-email"
+   export SEED_MANAGER_PASSWORD="your-manager-password"
    npx prisma generate
    npx prisma migrate dev
    npx prisma db seed
@@ -61,7 +65,7 @@
 
 6. **Open browser**
    - Go to: http://localhost:5173
-   - Login with: admin@inventory.com / admin123
+   - Login with the admin or manager credentials you configured in the seed environment variables
 
 ## Using Docker (Easier)
 

@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/authStore';
 import socketService, { ChatMessage, ChatSession } from '../services/socket';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Chat: React.FC = () => {
   const { user } = useAuthStore();
+  const { language, t } = useLanguage();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -13,7 +15,7 @@ const Chat: React.FC = () => {
   const [isAITyping, setIsAITyping] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     // Connect to socket
@@ -24,7 +26,7 @@ const Chat: React.FC = () => {
     socketService.on('session_joined', (data: { session: ChatSession; messages: ChatMessage[] }) => {
       setCurrentSession(data.session);
       setMessages(data.messages);
-      toast.success('Connected to chat session');
+      toast.success(t('Connected to chat session'));
     });
 
     socketService.on('message_received', (message: ChatMessage) => {
@@ -52,7 +54,7 @@ const Chat: React.FC = () => {
         setCurrentSession(null);
         setMessages([]);
       }
-      toast.success('Session deleted');
+      toast.success(t('Session deleted'));
     });
 
     socketService.on('error', (error: { message: string }) => {
@@ -101,7 +103,7 @@ const Chat: React.FC = () => {
       return;
     }
 
-    socketService.sendMessage(inputMessage.trim());
+    socketService.sendMessage(inputMessage.trim(), language);
     setInputMessage('');
     setIsTyping(false);
     setIsAITyping(true); // Show AI typing indicator
@@ -130,7 +132,7 @@ const Chat: React.FC = () => {
 
   const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (user && confirm('Are you sure you want to delete this conversation?')) {
+    if (user && confirm(t('Are you sure you want to delete this conversation?'))) {
       socketService.deleteSession(sessionId, user.id);
     }
   };
@@ -149,9 +151,9 @@ const Chat: React.FC = () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (d.toDateString() === today.toDateString()) {
-      return 'Today';
+      return t('Today');
     } else if (d.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
+      return t('Yesterday');
     }
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
@@ -162,14 +164,14 @@ const Chat: React.FC = () => {
       <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">Chat</h2>
-            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} title={isConnected ? 'Connected' : 'Disconnected'} />
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">{t('Chat')}</h2>
+            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} title={isConnected ? t('Connected') : t('Disconnected')} />
           </div>
           <button
             onClick={startNewSession}
             className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
           >
-            + New Conversation
+            + {t('New Conversation')}
           </button>
         </div>
 
@@ -177,8 +179,8 @@ const Chat: React.FC = () => {
         <div className="flex-1 overflow-y-auto">
           {sessions.length === 0 ? (
             <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-              <p className="text-sm">No conversations yet</p>
-              <p className="text-xs mt-2">Start a new conversation to get started!</p>
+              <p className="text-sm">{t('No conversations yet')}</p>
+              <p className="text-xs mt-2">{t('Start a new conversation to get started!')}</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -232,7 +234,7 @@ const Chat: React.FC = () => {
                     {currentSession.title}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Ask me anything about your inventory
+                    {t('Ask me anything about your inventory')}
                   </p>
                 </div>
               </div>
@@ -246,13 +248,13 @@ const Chat: React.FC = () => {
                     <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
-                    <p className="text-lg font-medium">Start a conversation</p>
-                    <p className="text-sm mt-2">Try asking:</p>
+                    <p className="text-lg font-medium">{t('Start a conversation')}</p>
+                    <p className="text-sm mt-2">{t('Try asking:')}</p>
                     <div className="mt-3 space-y-1 text-sm text-left max-w-md mx-auto">
-                      <p>• "Show low stock items"</p>
-                      <p>• "Search product laptop"</p>
-                      <p>• "Show total inventory value"</p>
-                      <p>• "List all suppliers"</p>
+                      <p>• "{t('Show low stock items')}"</p>
+                      <p>• "{t('Search product laptop')}"</p>
+                      <p>• "{t('Show total inventory value')}"</p>
+                      <p>• "{t('List all suppliers')}"</p>
                     </div>
                   </div>
                 </div>
@@ -304,7 +306,7 @@ const Chat: React.FC = () => {
                   type="text"
                   value={inputMessage}
                   onChange={handleInputChange}
-                  placeholder="Type your message... (e.g., 'show low stock')"
+                  placeholder={t('Type your message... (e.g., "show low stock")')}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 />
                 <button
@@ -312,11 +314,11 @@ const Chat: React.FC = () => {
                   disabled={!inputMessage.trim()}
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors"
                 >
-                  Send
+                  {t('Send')}
                 </button>
               </form>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Type "help" to see available commands
+                {t('Type "help" to see available commands')}
               </p>
             </div>
           </>
@@ -326,8 +328,8 @@ const Chat: React.FC = () => {
               <svg className="w-24 h-24 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <p className="text-xl font-medium">Select a conversation</p>
-              <p className="text-sm mt-2">or start a new one to begin chatting</p>
+              <p className="text-xl font-medium">{t('Select a conversation')}</p>
+              <p className="text-sm mt-2">{t('or start a new one to begin chatting')}</p>
             </div>
           </div>
         )}

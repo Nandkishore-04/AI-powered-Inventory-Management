@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface AddProductModalProps {
   suppliers: any[];
@@ -8,6 +9,7 @@ interface AddProductModalProps {
 }
 
 export default function AddProductModal({ suppliers, onClose, onSubmit }: AddProductModalProps) {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -45,7 +47,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New Product</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('Add New Product')}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
@@ -58,7 +60,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Product Name *
+                {t('Product Name *')}
               </label>
               <input
                 type="text"
@@ -67,13 +69,13 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
                 onChange={handleChange}
                 required
                 className="input"
-                placeholder="Enter product name"
+                placeholder={t('Enter product name')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Category
+                {t('Category')}
               </label>
               <input
                 type="text"
@@ -87,7 +89,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                HSN Code
+                {t('HSN Code')}
               </label>
               <input
                 type="text"
@@ -101,7 +103,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                GST Rate (%) *
+                {t('GST Rate (%) *')}
               </label>
               <input
                 type="number"
@@ -118,7 +120,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Unit Price (₹) *
+                {t('Unit Price (Rs.) *')}
               </label>
               <input
                 type="number"
@@ -135,7 +137,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Current Stock *
+                {t('Current Stock *')}
               </label>
               <input
                 type="number"
@@ -150,7 +152,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Reorder Level *
+                {t('Reorder Level *')}
               </label>
               <input
                 type="number"
@@ -165,7 +167,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Supplier
+                {t('Supplier')}
               </label>
               <select
                 name="supplierId"
@@ -173,7 +175,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
                 onChange={handleChange}
                 className="input"
               >
-                <option value="">Select Supplier</option>
+                <option value="">{t('Select Supplier')}</option>
                 {suppliers.map((supplier) => (
                   <option key={supplier.id} value={supplier.id}>
                     {supplier.name}
@@ -185,7 +187,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
+              {t('Description')}
             </label>
             <textarea
               name="description"
@@ -193,7 +195,7 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
               onChange={handleChange}
               rows={3}
               className="input"
-              placeholder="Enter product description"
+              placeholder={t('Enter product description')}
             />
           </div>
 
@@ -204,14 +206,14 @@ export default function AddProductModal({ suppliers, onClose, onSubmit }: AddPro
               className="btn btn-secondary"
               disabled={loading}
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="submit"
               className="btn btn-primary"
               disabled={loading}
             >
-              {loading ? 'Adding...' : 'Add Product'}
+              {loading ? t('Adding...') : t('Add Product')}
             </button>
           </div>
         </form>

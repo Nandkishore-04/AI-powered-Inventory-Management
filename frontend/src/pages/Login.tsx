@@ -2,53 +2,62 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading } = useAuthStore();
+  const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
-      toast.error('Please fill in all fields');
+      toast.error(t('Please fill in all fields'));
       return;
     }
 
     try {
       await login(email, password);
-      toast.success('Login successful!');
+      toast.success(t('Login successful!'));
       navigate('/dashboard');
     } catch (error) {
-      toast.error('Invalid email or password');
+      toast.error(t('Invalid email or password'));
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 relative">
+      <button
+        type="button"
+        onClick={toggleLanguage}
+        className="absolute top-6 right-6 px-3 py-2 bg-white/90 dark:bg-gray-800 text-sm rounded-lg shadow"
+      >
+        {language === 'en' ? t('Tamil') : t('English')}
+      </button>
       <div className="w-full max-w-md">
         <div className="card p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Inventory Manager
+              {t('Inventory Manager')}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Sign in to your account
+              {t('Sign in to your account')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
+                {t('Email Address')}
               </label>
               <input
                 id="email"
                 type="email"
                 className="input"
-                placeholder="admin@inventory.com"
+                placeholder={t('Enter email address')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -57,7 +66,7 @@ export default function Login() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
+                {t('Password')}
               </label>
               <input
                 id="password"
@@ -75,24 +84,16 @@ export default function Login() {
               className="btn btn-primary w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? t('Signing in...') : t('Sign In')}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
+            {t("Don't have an account?")}{' '}
             <Link to="/register" className="text-primary-600 hover:text-primary-500 font-medium">
-              Register here
+              {t('Register here')}
             </Link>
           </p>
-
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-xs text-blue-800 dark:text-blue-300 font-medium">Demo Credentials:</p>
-            <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
-              Admin: admin@inventory.com / admin123<br />
-              Manager: manager@inventory.com / manager123
-            </p>
-          </div>
         </div>
       </div>
     </div>

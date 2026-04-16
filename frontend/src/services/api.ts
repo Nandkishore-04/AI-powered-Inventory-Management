@@ -190,8 +190,9 @@ class ApiService {
   }
 
   // Invoice endpoints
-  async uploadInvoice(formData: FormData) {
+  async uploadInvoice(formData: FormData, params?: { autoCreate?: boolean; autoApprove?: boolean }) {
     const response = await this.client.post('/invoices/upload', formData, {
+      params,
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -200,12 +201,31 @@ class ApiService {
   }
 
   async getInvoices(params?: { limit?: number; offset?: number; status?: string }) {
-    const response = await this.client.get('/invoices', { params });
+    const response = await this.client.get('/invoices/bills', { params });
     return response.data;
   }
 
   async getInvoice(id: string) {
-    const response = await this.client.get(`/invoices/${id}`);
+    const response = await this.client.get(`/invoices/bills/${id}`);
+    return response.data;
+  }
+
+  async updateInvoice(billId: string, data: any) {
+    const response = await this.client.patch(`/invoices/bills/${billId}`, data);
+    return response.data;
+  }
+
+  async updateInvoiceLineItem(
+    billId: string,
+    lineItemId: string,
+    data: { itemName?: string; quantity?: number; unitPrice?: number; gstRate?: number; hsnCode?: string | null }
+  ) {
+    const response = await this.client.patch(`/invoices/bills/${billId}/line-items/${lineItemId}`, data);
+    return response.data;
+  }
+
+  async deleteInvoice(billId: string) {
+    const response = await this.client.delete(`/invoices/bills/${billId}`);
     return response.data;
   }
 }

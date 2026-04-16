@@ -3,12 +3,21 @@ import { extractInvoiceDataWithGoogleDocAI } from './googleDocumentAIService';
 import logger from '../config/logger';
 import { validateGSTINFormat } from '../utils/gstValidation';
 import prisma from '../config/database';
+import fs from 'fs';
+import path from 'path';
+import pdf from 'pdf-parse';
+import { extractTextWithPaddleOCR, isPaddleOCRAvailable } from './paddleOCRService';
 
 // const openai = new OpenAI({
 //   apiKey: process.env.OPENAI_API_KEY || '',
 // });
 
-const isConfigured = !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const googleCredentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const hasGoogleCredentialsFile =
+  !!googleCredentialsPath && fs.existsSync(path.resolve(googleCredentialsPath));
+const hasGoogleProcessorConfig =
+  !!process.env.GOOGLE_PROJECT_ID && !!process.env.GOOGLE_PROCESSOR_ID;
+const isConfigured = hasGoogleCredentialsFile && hasGoogleProcessorConfig;
 
 export interface ExtractedInvoiceData {
   invoiceNumber: string;
@@ -54,6 +63,89 @@ export interface CorrectionSuggestion {
   suggestedValue: any;
   reason: string;
   confidence: number;
+}
+
+function extractTextValue(text: string, regex: RegExp): string {
+  const match = text.match(regex);
+  return match?.[1]?.trim() || '';
+}
+
+function parseAmount(value: string): number {
+  if (!value) return 0;
+  const normalized = value.replace(/,/g, '').replace(/[^\d.]/g, '');
+  const parsedNumber = Number(normalized);
+  return Number.isFinite(parsedNumber) ? parsedNumber : 0;
+}
+
+function parseInvoiceFieldsFromText(
+  text: string,
+  fallbackConfidence: number
+): Partial<ExtractedInvoiceData> {
+  const invoiceNumber = extractTextValue(text, /(?:Invoice\s*(?:No|Number|#)\s*[:\-]?\s*)([A-Z0-9\-\/]+)/i);
+  const invoiceDate = extractTextValue(
+    text,
+    /(?:Invoice\s*Date|Date)\s*[:\-]?\s*([\d]{1,2}[\/\-.][\d]{1,2}[\/\-.][\d]{2,4}|[\d]{4}[\-][\d]{2}[\-][\d]{2})/i
+  );
+  const supplierGSTIN = extractTextValue(text, /(?:GSTIN|GST\s*No)\s*[:\-]?\s*([0-9A-Z]{15})/i);
+
+  const supplierName =
+    extractTextValue(text, /(?:Supplier|Vendor|From)\s*[:\-]?\s*([^\n\r]+)/i) ||
+    extractTextValue(text, /(?:Bill\s*From)\s*[:\-]?\s*([^\n\r]+)/i);
+
+  const subtotal = parseAmount(
+    extractTextValue(text, /(?:Subtotal|Taxable\s*Amount)\s*[:\-]?\s*([₹\s\d,\.]+)/i)
+  );
+  const cgst = parseAmount(extractTextValue(text, /(?:CGST)\s*[:\-]?\s*([₹\s\d,\.]+)/i));
+  const sgst = parseAmount(extractTextValue(text, /(?:SGST)\s*[:\-]?\s*([₹\s\d,\.]+)/i));
+  const igst = parseAmount(extractTextValue(text, /(?:IGST)\s*[:\-]?\s*([₹\s\d,\.]+)/i));
+  const totalAmount = parseAmount(
+    extractTextValue(text, /(?:Grand\s*Total|Total\s*Amount|Total)\s*[:\-]?\s*([₹\s\d,\.]+)/i)
+  );
+
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const items: ExtractedInvoiceData['items'] = [];
+  for (const line of lines) {
+    const itemMatch = line.match(
+      /^([A-Za-z0-9\s\-\/\(\)\.]{3,}?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:,\d{3})*(?:\.\d+)?)\s+(\d+(?:,\d{3})*(?:\.\d+)?)$/
+    );
+    if (!itemMatch) continue;
+
+    const name = itemMatch[1].trim();
+    const quantity = parseAmount(itemMatch[2]);
+    const unitPrice = parseAmount(itemMatch[3]);
+    const amount = parseAmount(itemMatch[4]);
+
+    if (!name || quantity <= 0 || unitPrice <= 0) continue;
+
+    items.push({
+      name,
+      quantity,
+      unitPrice,
+      amount: amount || quantity * unitPrice,
+      gstRate: 18,
+    });
+  }
+
+  return {
+    invoiceNumber,
+    invoiceDate,
+    supplierName,
+    supplierGSTIN,
+    subtotal: subtotal || items.reduce((sum, i) => sum + i.amount, 0),
+    cgst,
+    sgst,
+    igst,
+    totalAmount:
+      totalAmount ||
+      (subtotal || items.reduce((sum, i) => sum + i.amount, 0)) + cgst + sgst + igst,
+    items,
+    confidence: items.length > 0 ? Math.max(fallbackConfidence, 70) : fallbackConfidence,
+    rawText: text.slice(0, 4000),
+  };
 }
 
 /**
@@ -106,14 +198,64 @@ export async function extractInvoiceDataWithAI(
  * (Useful when OpenAI is not available)
  */
 export async function extractInvoiceDataSimple(
-  _imagePath: string
+  filePath: string
 ): Promise<Partial<ExtractedInvoiceData>> {
-  // This is a simplified version that would work with pre-processed text
-  // In a real scenario, you'd use Tesseract.js or similar for OCR
-  return {
-    confidence: 30, // Low confidence for manual verification
-    items: [],
+  const ext = path.extname(filePath).toLowerCase();
+
+  const tryPaddleFallback = async (confidenceFloor: number): Promise<Partial<ExtractedInvoiceData> | null> => {
+    if (!isPaddleOCRAvailable()) {
+      return null;
+    }
+
+    try {
+      const paddleResult = await extractTextWithPaddleOCR(filePath);
+      const paddleConfidence = Math.round(
+        Math.max(confidenceFloor, Math.min(92, (paddleResult.avgConfidence || 0) * 100))
+      );
+      return parseInvoiceFieldsFromText(paddleResult.text || '', paddleConfidence);
+    } catch (error: any) {
+      logger.warn('PaddleOCR fallback failed', {
+        filePath,
+        error: error?.message,
+      });
+      return null;
+    }
   };
+
+  if (ext !== '.pdf') {
+    const paddleData = await tryPaddleFallback(45);
+    if (paddleData) {
+      return paddleData;
+    }
+
+    return {
+      confidence: 20,
+      items: [],
+    };
+  }
+
+  try {
+    const fileBuffer = fs.readFileSync(filePath);
+    const parsed = await pdf(fileBuffer);
+    const text = parsed.text || '';
+
+    return parseInvoiceFieldsFromText(text, 45);
+  } catch (error: any) {
+    logger.warn('PDF parsing failed, trying PaddleOCR fallback', {
+      filePath,
+      error: error?.message,
+    });
+
+    const paddleData = await tryPaddleFallback(50);
+    if (paddleData) {
+      return paddleData;
+    }
+
+    return {
+      confidence: 20,
+      items: [],
+    };
+  }
 }
 
 /**
@@ -127,17 +269,17 @@ export async function checkDuplicateInvoice(
   isDuplicate: boolean;
   existingInvoice?: any;
 }> {
+  if (!invoiceNumber || !invoiceNumber.trim()) {
+    return { isDuplicate: false, existingInvoice: null };
+  }
+
   const existing = await prisma.purchaseBill.findFirst({
     where: {
-      invoiceNumber,
-      supplier: {
-        name: {
-          contains: supplierName,
-        },
-      },
+      invoiceNumber: invoiceNumber.trim(),
     },
     include: {
       supplier: true,
+      lineItems: true,
     },
   });
 
@@ -426,20 +568,32 @@ export async function processInvoice(
   useAI: boolean = true
 ): Promise<ExtractedInvoiceData> {
   if (useAI && isConfigured) {
-    return await extractInvoiceDataWithAI(filePath);
-  } else {
-    const simpleData = await extractInvoiceDataSimple(filePath);
-    return {
-      invoiceNumber: '',
-      invoiceDate: '',
-      supplierName: '',
-      subtotal: 0,
-      totalAmount: 0,
-      items: [],
-      confidence: 30,
-      ...simpleData,
-    };
+    try {
+      return await extractInvoiceDataWithAI(filePath);
+    } catch (error: any) {
+      logger.warn('Google OCR failed, falling back to local PDF extraction', {
+        error: error?.message,
+        filePath,
+      });
+    }
+  } else if (useAI && !isConfigured) {
+    logger.info('Google OCR not configured properly, using local extraction fallback', {
+      hasGoogleCredentialsFile,
+      hasGoogleProcessorConfig,
+    });
   }
+
+  const simpleData = await extractInvoiceDataSimple(filePath);
+  return {
+    invoiceNumber: '',
+    invoiceDate: '',
+    supplierName: '',
+    subtotal: 0,
+    totalAmount: 0,
+    items: [],
+    confidence: 30,
+    ...simpleData,
+  };
 }
 
 export { isConfigured as isOCRConfigured };

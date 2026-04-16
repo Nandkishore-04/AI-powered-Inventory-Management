@@ -4,6 +4,8 @@ import {
   createPurchaseBill,
   getPurchaseBills,
   getPurchaseBill,
+  updatePurchaseBill,
+  updateBillLineItem,
   updateBillStatus,
   deletePurchaseBill,
   batchProcessInvoices,
@@ -155,7 +157,9 @@ router.get('/templates', authorize('ADMIN'), async (req, res, next) => {
 router.post('/bills', authorize('ADMIN', 'MANAGER'), createPurchaseBill);
 router.get('/bills', getPurchaseBills);
 router.get('/bills/:id', getPurchaseBill);
+router.patch('/bills/:id', updatePurchaseBill);
+router.patch('/bills/:id/line-items/:lineItemId', updateBillLineItem);
 router.patch('/bills/:id/status', authorize('ADMIN', 'MANAGER'), updateBillStatus);
-router.delete('/bills/:id', authorize('ADMIN'), deletePurchaseBill);
+router.delete('/bills/:id', deletePurchaseBill);
 
 export default router;
